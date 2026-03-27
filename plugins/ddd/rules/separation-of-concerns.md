@@ -7,7 +7,7 @@ impact: HIGH
 
 # Enforce Separation of Concerns Between Layers
 
-Do NOT mix business logic with UI components or place database queries directly in controllers. Each architectural layer must have a single responsibility: controllers handle HTTP concerns, services encapsulate business logic, and repositories manage data access. Violating these boundaries creates tightly coupled code that is difficult to test, refactor, and reason about. When business rules live inside controllers, they cannot be reused across different entry points (API, CLI, events) and changes to infrastructure leak into domain logic. Maintain clear boundaries between contexts by delegating work through well-defined interfaces rather than inlining cross-cutting concerns.
+Do NOT mix business logic with REST controllers or place database queries directly in service classes. Each architectural layer must have a single responsibility: controllers handle HTTP concerns, services encapsulate business logic, and repositories manage data access. Violating these boundaries creates tightly coupled code that is difficult to test, refactor, and reason about. When business rules live inside controllers, they cannot be reused across different entry points (REST, gRPC, events) and changes to infrastructure leak into domain logic. Maintain clear boundaries between contexts by delegating work through well-defined interfaces rather than inlining cross-cutting concerns.
 
 ## Critical principles
 
@@ -18,40 +18,51 @@ Do NOT mix business logic with UI components or place database queries directly 
 
 ## Incorrect
 
-The controller mixes HTTP handling, business logic, and database queries in a single function, making it impossible to reuse or test the business rules independently.
+The controller mixes HTTP handling, business logic, and database queries in a single method, making it impossible to reuse or test the business rules independently.
 
-```typescript
-// OrderController.ts — everything in one place
-import { db } from "../database";
+```java
+// OrderController.java — everything in one place
+@RestController
+public class OrderController {
 
-export class OrderController {
-  async createOrder(req: Request, res: Response) {
-    const { items, customerId } = req.body;
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
-    // Database query directly in controller
-    const customer = await db.query("SELECT * FROM customers WHERE id = $1", [customerId]);
-    if (!customer) {
-      return res.status(404).json({ error: "Customer not found" });
+    @PostMapping("/orders")
+    public Order createOrder(@RequestBody OrderRequest req) {
+        // Database query directly in controller
+        Customer customer = jdbcTemplate.queryForObject(
+            "SELECT * FROM customers WHERE id = ?",
+            new Object[]{req.getCustomerId()},
+            (rs, rowNum) -> mapCustomer(rs)
+        );
+        if (customer == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found");
+        }
+
+        // Business logic mixed into controller
+        double total = 0;
+        for (OrderItem item : req.getItems()) {
+            Product product = jdbcTemplate.queryForObject(
+                "SELECT * FROM products WHERE id = ?",
+                new Object[]{item.getProductId()},
+                (rs, rowNum) -> mapProduct(rs)
+            );
+            total += product.getPrice() * item.getQuantity();
+        }
+        if (total > 10000) {
+            total = total * 0.9; // 10% discount for large orders
+        }
+
+        // More database queries inline
+        Order order = jdbcTemplate.queryForObject(
+            "INSERT INTO orders (customer_id, total) VALUES (?, ?) RETURNING *",
+            new Object[]{req.getCustomerId(), total},
+            (rs, rowNum) -> mapOrder(rs)
+        );
+
+        return order;
     }
-
-    // Business logic mixed into controller
-    let total = 0;
-    for (const item of items) {
-      const product = await db.query("SELECT * FROM products WHERE id = $1", [item.productId]);
-      total += product.price * item.quantity;
-    }
-    if (total > 10000) {
-      total = total * 0.9; // 10% discount for large orders
-    }
-
-    // More database queries inline
-    const order = await db.query(
-      "INSERT INTO orders (customer_id, total) VALUES ($1, $2) RETURNING *",
-      [customerId, total]
-    );
-
-    return res.status(201).json(order);
-  }
 }
 ```
 
@@ -59,54 +70,72 @@ export class OrderController {
 
 The controller delegates to a service for business logic and a repository for data access. Each layer has a single responsibility and can be tested and reused independently.
 
-```typescript
-// OrderController.ts — handles HTTP only
-export class OrderController {
-  constructor(private orderService: OrderService) {}
+```java
+// OrderController.java — handles HTTP only
+@RestController
+public class OrderController {
+    private final OrderService orderService;
 
-  async createOrder(req: Request, res: Response) {
-    const { items, customerId } = req.body;
-    const order = await this.orderService.createOrder(customerId, items);
-    return res.status(201).json(order);
-  }
-}
-
-// OrderService.ts — business logic only
-export class OrderService {
-  constructor(
-    private customerRepo: CustomerRepository,
-    private productRepo: ProductRepository,
-    private orderRepo: OrderRepository
-  ) {}
-
-  async createOrder(customerId: string, items: OrderItem[]): Promise<Order> {
-    const customer = await this.customerRepo.findById(customerId);
-    if (!customer) {
-      throw new NotFoundError("Customer not found");
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
     }
 
-    const total = await this.calculateTotal(items);
-    return this.orderRepo.create({ customerId, total });
-  }
-
-  private async calculateTotal(items: OrderItem[]): Promise<number> {
-    let total = 0;
-    for (const item of items) {
-      const product = await this.productRepo.findById(item.productId);
-      total += product.price * item.quantity;
+    @PostMapping("/orders")
+    public Order createOrder(@RequestBody OrderRequest req) {
+        return orderService.createOrder(req.getCustomerId(), req.getItems());
     }
-    return total > 10000 ? total * 0.9 : total;
-  }
 }
 
-// OrderRepository.ts — data access only
-export class OrderRepository {
-  async create(data: CreateOrderData): Promise<Order> {
-    return db.query(
-      "INSERT INTO orders (customer_id, total) VALUES ($1, $2) RETURNING *",
-      [data.customerId, data.total]
-    );
-  }
+// OrderService.java — business logic only
+@Service
+public class OrderService {
+    private final CustomerRepository customerRepository;
+    private final ProductRepository productRepository;
+    private final OrderRepository orderRepository;
+
+    public OrderService(CustomerRepository customerRepository,
+                       ProductRepository productRepository,
+                       OrderRepository orderRepository) {
+        this.customerRepository = customerRepository;
+        this.productRepository = productRepository;
+        this.orderRepository = orderRepository;
+    }
+
+    public Order createOrder(String customerId, List<OrderItem> items) {
+        Customer customer = customerRepository.findById(customerId)
+            .orElseThrow(() -> new NotFoundException("Customer not found"));
+
+        double total = calculateTotal(items);
+        return orderRepository.create(new Order(customerId, total));
+    }
+
+    private double calculateTotal(List<OrderItem> items) {
+        double total = 0;
+        for (OrderItem item : items) {
+            Product product = productRepository.findById(item.getProductId());
+            total += product.getPrice() * item.getQuantity();
+        }
+        return total > 10000 ? total * 0.9 : total;
+    }
+}
+
+// OrderRepository.java — data access only
+@Repository
+public class OrderRepository {
+    private final JdbcTemplate jdbcTemplate;
+
+    public OrderRepository(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public Order create(Order order) {
+        return jdbcTemplate.queryForObject(
+            "INSERT INTO orders (customer_id, total) VALUES (?, ?) RETURNING *",
+            (rs, rowNum) -> mapOrder(rs),
+            order.getCustomerId(),
+            order.getTotal()
+        );
+    }
 }
 ```
 

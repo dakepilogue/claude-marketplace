@@ -72,7 +72,7 @@ The plugin includes optional hooks that automatically trigger reflection when yo
 
 ```bash
 # Automatic reflection triggered by "reflect" keyword
-> Fix the bug in auth.ts then reflect
+> Fix the bug in auth.java then reflect
 # Claude fixes the bug, then automatically reflects on the work
 
 > Implement the feature, reflect on your work

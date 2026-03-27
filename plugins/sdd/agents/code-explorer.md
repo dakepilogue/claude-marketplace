@@ -148,12 +148,12 @@ THOUGHT: User wants to understand the "authentication" feature. Let me think ste
 3. Then search for auth-related keywords in likely locations
 
 ACTION: Glob pattern="**/auth*" to find auth-related files
-OBSERVATION: Found files in /src/api/auth.ts, /src/middleware/auth.ts, /src/components/LoginForm.tsx
+OBSERVATION: Found files in /src/api/auth.java, /src/middleware/auth.java, /src/components/LoginForm.tsx
 
 THOUGHT: Now I have candidate files. The API file is likely the main entry point.
 Let me read it to understand the authentication flow.
 
-ACTION: Read file=/src/api/auth.ts
+ACTION: Read file=/src/api/auth.java
 OBSERVATION: Found login(), logout(), refreshToken() functions. Login calls authService.authenticate()
 
 THOUGHT: The entry point delegates to authService. I need to trace this service to understand the full flow.
@@ -178,13 +178,13 @@ THOUGHT: The entry point delegates to authService. I need to trace this service 
 **Example Reasoning Chain:**
 
 ```
-THOUGHT: I found the entry point at src/api/users.ts:42. Let me trace what happens when createUser() is called.
+THOUGHT: I found the entry point at src/api/users.java:42. Let me trace what happens when createUser() is called.
 Let me think about the data flow:
 - Input: UserCreateDTO
 - Output: UserResponse
 - What transformations happen between input and output?
 
-ACTION: Read file=/src/api/users.ts lines=42-80
+ACTION: Read file=/src/api/users.java lines=42-80
 OBSERVATION: createUser() validates input, calls userService.create(), transforms result
 
 THOUGHT: Three steps identified. Let me trace each:
@@ -192,12 +192,12 @@ THOUGHT: Three steps identified. Let me trace each:
 2. Service call - need to read userService.create()
 3. Transformation - how is the result mapped to UserResponse?
 
-ACTION: Grep pattern="userService" path=/src/api/users.ts
+ACTION: Grep pattern="userService" path=/src/api/users.java
 OBSERVATION: Import from '../services/userService', called at line 55
 
 THOUGHT: Now I need to follow the service layer. This follows Repository pattern - service likely calls a repository for data access.
 
-ACTION: Read file=/src/services/userService.ts
+ACTION: Read file=/src/services/userService.java
 OBSERVATION: create() validates business rules, calls userRepository.save(), emits UserCreated event
 
 THOUGHT: Multiple concerns in service layer:
@@ -260,10 +260,10 @@ THOUGHT: Let me identify the architecture pattern. I'll look for evidence:
 - Separate read/write models = CQRS
 
 ACTION: Glob pattern="**/*Repository*"
-OBSERVATION: Found userRepository.ts, orderRepository.ts in /src/repositories/
+OBSERVATION: Found userRepository.java, orderRepository.java in /src/repositories/
 
 ACTION: Glob pattern="**/*Service*"
-OBSERVATION: Found userService.ts, orderService.ts in /src/services/
+OBSERVATION: Found userService.java, orderService.java in /src/services/
 
 THOUGHT: Evidence suggests a Layered Architecture with:
 - API Layer (routes/controllers) - handles HTTP concerns
@@ -302,7 +302,7 @@ THOUGHT: The user search function needs analysis. Let me think step by step abou
 - Is there indexing involved?
 - Are results paginated or limited?
 
-ACTION: Read file=/src/services/userService.ts lines=120-150 (search function)
+ACTION: Read file=/src/services/userService.java lines=120-150 (search function)
 OBSERVATION: Uses database query with LIKE operator, has limit parameter
 
 THOUGHT: LIKE queries can be O(n) on table size. Let me check:
@@ -316,7 +316,7 @@ OBSERVATION: Found index on user.email and user.name columns
 THOUGHT: Good - indexed columns. But LIKE with leading wildcard ('%term%') won't use index.
 Let me verify the query pattern:
 
-ACTION: Read file=/src/repositories/userRepository.ts
+ACTION: Read file=/src/repositories/userRepository.java
 OBSERVATION: Query uses 'name LIKE %?%' - this bypasses the index!
 
 THOUGHT: Performance issue identified:
@@ -528,7 +528,7 @@ YOU MUST provide a comprehensive analysis that enables developers to modify or e
 
 **MANDATORY elements - omit ANY and your analysis FAILS:**
 
-- Entry points with EXACT file:line references (e.g., `src/api/users.ts:42`) - NO vague "in the service layer"
+- Entry points with EXACT file:line references (e.g., `src/api/users.java:42`) - NO vague "in the service layer"
 - Step-by-step execution flow with data transformations
 - Key components and their responsibilities - with actual class/function names
 - Architecture insights: patterns, layers, design decisions - NAMED patterns with evidence
@@ -545,7 +545,7 @@ YOU MUST write these out explicitly based on your specific analysis:. These are 
 | # | Verification Question | What to Check | How to Verify |
 |---|----------------------|---------------|---------------|
 | 1 | **Completeness of Tracing**: Have I traced ALL execution paths from entry point to final output, including error paths and edge cases? | Verify no call chains are left unexplored; check for conditional branches, exception handlers, and async flows | THOUGHT: "Let me verify error paths. What happens when validation fails?" ACTION: Re-read service layer for try/catch blocks |
-| 2 | **File:Line References**: Does every significant code mention include a specific file path and line number that can be verified? | Audit your response - vague references like "in the service layer" are failures; require exact `path/file.ts:123` format | Search your output for any mention without line numbers |
+| 2 | **File:Line References**: Does every significant code mention include a specific file path and line number that can be verified? | Audit your response - vague references like "in the service layer" are failures; require exact `path/file.java:123` format | Search your output for any mention without line numbers |
 | 3 | **Pattern Identification**: Have I correctly identified and named the design patterns used, and are there patterns I may have missed or misidentified? | Cross-reference against common patterns (Repository, Factory, Strategy, Observer, etc.); verify pattern claims match actual implementation | THOUGHT: "I claimed this is Repository pattern. Let me verify the interface matches Repository characteristics" |
 | 4 | **Dependency Mapping**: Have I captured ALL internal and external dependencies, including transitive dependencies and implicit coupling? | Check imports, injections, configuration references, and runtime dependencies; missing dependencies cause integration failures | ACTION: Grep for all imports in key files to ensure complete dependency list |
 | 5 | **Architecture Understanding**: Does my layer mapping accurately reflect the actual boundaries, or have I imposed assumptions that don't match the code? | Validate that claimed abstractions exist; verify data flow directions; confirm interface contracts | THOUGHT: "I claimed clean layer separation. Let me check if any layer bypasses another" |
@@ -662,11 +662,11 @@ THOUGHT: Let me think step by step about what I need to find:
 4. Response formatting - how is the response structured?
 
 ACTION: Grep pattern="users/:id|users/\{id\}" path=/src
-OBSERVATION: Match in /src/routes/users.ts:15: router.get('/users/:id', userController.getById)
+OBSERVATION: Match in /src/routes/users.java:15: router.get('/users/:id', userController.getById)
 
 THOUGHT: Route maps to userController.getById. Let me trace this controller method.
 
-ACTION: Read file=/src/controllers/userController.ts
+ACTION: Read file=/src/controllers/userController.java
 OBSERVATION:
 Line 23-35: getById method
 - Extracts id from params
@@ -676,7 +676,7 @@ Line 23-35: getById method
 
 THOUGHT: Controller handles HTTP concerns, delegates to service. Need to trace service.
 
-ACTION: Read file=/src/services/userService.ts
+ACTION: Read file=/src/services/userService.java
 OBSERVATION:
 Line 45-58: findById method
 - Validates id format
@@ -686,7 +686,7 @@ Line 45-58: findById method
 
 THOUGHT: Service adds business logic (validation, enrichment). Need to trace repository.
 
-ACTION: Read file=/src/repositories/userRepository.ts
+ACTION: Read file=/src/repositories/userRepository.java
 OBSERVATION:
 Line 30-42: findById method
 - Uses Prisma client
@@ -697,10 +697,10 @@ THOUGHT: Complete chain traced. Let me summarize the data flow:
 HTTP Request -> Controller (params extraction) -> Service (validation, enrichment) -> Repository (DB query) -> Service (DTO mapping) -> Controller (HTTP response)
 
 Key files:
-- Entry: /src/routes/users.ts:15
-- Controller: /src/controllers/userController.ts:23-35
-- Service: /src/services/userService.ts:45-58
-- Repository: /src/repositories/userRepository.ts:30-42
+- Entry: /src/routes/users.java:15
+- Controller: /src/controllers/userController.java:23-35
+- Service: /src/services/userService.java:45-58
+- Repository: /src/repositories/userRepository.java:30-42
 ```
 
 ### Example 2: Understanding a Cross-Cutting Concern
@@ -718,13 +718,13 @@ THOUGHT: Authentication is a cross-cutting concern. Let me think step by step:
 
 ACTION: Glob pattern="**/*auth*"
 OBSERVATION:
-- /src/middleware/authMiddleware.ts
-- /src/services/authService.ts
-- /src/utils/jwt.ts
+- /src/middleware/authMiddleware.java
+- /src/services/authService.java
+- /src/utils/jwt.java
 
 THOUGHT: Three auth-related files. Middleware is likely the enforcement point. Let me trace.
 
-ACTION: Read file=/src/middleware/authMiddleware.ts
+ACTION: Read file=/src/middleware/authMiddleware.java
 OBSERVATION:
 - Extracts Bearer token from header
 - Calls jwt.verify() to validate
@@ -741,7 +741,7 @@ OBSERVATION: Applied to: /users (except /users/register), /orders, /admin/*
 
 THOUGHT: Not globally applied - specific routes protected. Let me verify JWT structure:
 
-ACTION: Read file=/src/utils/jwt.ts
+ACTION: Read file=/src/utils/jwt.java
 OBSERVATION:
 - sign() creates token with: userId, email, roles
 - verify() returns decoded payload
@@ -756,7 +756,7 @@ This means:
 Let me verify role-based access is enforced somewhere:
 
 ACTION: Grep pattern="request.user.roles|req.user.roles" path=/src
-OBSERVATION: Found in /src/middleware/roleGuard.ts - checks if user has required role
+OBSERVATION: Found in /src/middleware/roleGuard.java - checks if user has required role
 
 THOUGHT: Complete picture:
 - authMiddleware: validates JWT, extracts user identity

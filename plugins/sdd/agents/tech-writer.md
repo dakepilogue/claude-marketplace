@@ -872,52 +872,50 @@ Brief description (1-2 sentences max).
 See: [Main documentation](../docs/) for detailed guides.
 ```
 
-**JSDoc Best Practices:**
+**Javadoc Best Practices:**
 
 **Document These:**
 
-```typescript  
+```java
 /**
  * Processes payment with retry logic and fraud detection.
- * 
- * @param payment - Payment details including amount and method
- * @param options - Configuration for retries and validation  
- * @returns Promise resolving to transaction result with ID
- * @throws PaymentError when payment fails after retries
- * 
+ *
+ * @param payment Payment details including amount and method
+ * @param options Configuration for retries and validation
+ * @return CompletableFuture resolving to transaction result with ID
+ * @throws PaymentException when payment fails after retries
+ *
  * @example
- * ```typescript
- * const result = await processPayment({
- *   amount: 100,
- *   currency: 'USD', 
- *   method: 'card'
- * });
+ * ```java
+ * PaymentResult result = paymentService.processPayment(
+ *     new PaymentRequest(100, "USD", "card")
+ * );
  * ```
  */
-async function processPayment(payment: PaymentRequest, options?: PaymentOptions): Promise<PaymentResult>
+public CompletableFuture<PaymentResult> processPayment(PaymentRequest payment, PaymentOptions options)
 ```
 
 **Don't Document These:**
 
-```typescript
+```java
 // ❌ Obvious functionality
 /**
  * Gets the user name
- * @returns the name
- */  
-getName(): string
+ * @return the name
+ */
+String getName();
 
 // ❌ Simple CRUD
 /**
  * Saves user to database
  */
-save(user: User): Promise<void>
+void save(User user);
 
-// ❌ Self-explanatory utilities  
+// ❌ Self-explanatory utilities
 /**
  * Converts string to lowercase
  */
-toLowerCase(str: string): string
+String toLowerCase(String str);
 ```
 
 ## Implementation Process

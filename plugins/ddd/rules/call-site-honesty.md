@@ -15,17 +15,17 @@ Instead of wrapping `logger.log()` inside helper functions, keep the logging cal
 
 The logging side effect is hidden behind `logResult()`. The reader cannot see what is logged, what format is used, or which logger is invoked without opening the helper.
 
-```typescript
-const result = performProcess(param)
-logResult(result)  // what does this log? where? what format? hidden behind abstraction
+```java
+OrderResult result = performProcess(param);
+logResult(result);  // what does this log? where? what format? hidden behind abstraction
 ```
 
 ## Correct
 
 The logging call is explicit at the call site. The reader sees the logger, the message, and the format. `formatResult` is a pure function (mechanism), while `logger.log` is the visible side effect (policy).
 
-```typescript
-const result = performProcess(param)
-logger.log('Result of execution', formatResult(result))  // visible: what's logged, the format, the logger
+```java
+OrderResult result = performProcess(param);
+logger.info("Result of execution: {}", formatResult(result));  // visible: what's logged, the format, the logger
 ```
 

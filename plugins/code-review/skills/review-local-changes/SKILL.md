@@ -286,7 +286,7 @@ When `--json` flag is set, output results in this JSON structure:
   "issues": [
     {
       "severity": "critical",   // severity label derived from impact_score range
-      "file": "src/auth/session.ts",
+      "file": "src/auth/session.java",
       "lines": "42-48",         // affected line range in the diff
       "description": "Session token not invalidated on password change",
       "evidence": "Old sessions remain active after credential reset, allowing unauthorized access",
@@ -296,7 +296,7 @@ When `--json` flag is set, output results in this JSON structure:
     },
     {
       "severity": "medium",
-      "file": "src/api/handlers.ts",
+      "file": "src/api/handlers.java",
       "lines": "115-120",
       "description": "Missing error handling for database timeout",
       "evidence": "Database query has no timeout or retry logic, will hang indefinitely under load",

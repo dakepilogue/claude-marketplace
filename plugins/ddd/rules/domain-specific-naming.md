@@ -10,7 +10,7 @@ impact: HIGH
 
 Avoid generic module names like `utils`, `helpers`, `common`, and `shared`. These names attract unrelated functions, creating grab-bag files with no cohesion. Use domain-specific names that reflect the bounded context and the module's single responsibility -- names like `OrderCalculator`, `UserAuthenticator`, or `InvoiceGenerator` make purpose immediately clear and enforce cohesion by design.
 
-Generic names signal missing domain analysis. When a developer reaches for `utils.ts`, it usually means the function belongs in a domain module that has not been identified yet. Naming modules after their domain concept prevents them from becoming dumping grounds and keeps each module focused on a single, clear purpose.
+Generic names signal missing domain analysis. When a developer reaches for `Utils.java`, it usually means the function belongs in a domain module that has not been identified yet. Naming modules after their domain concept prevents them from becoming dumping grounds and keeps each module focused on a single, clear purpose.
 
 ## Critical princeples
 
@@ -24,44 +24,56 @@ Generic names signal missing domain analysis. When a developer reaches for `util
 
 Generic module names attract unrelated functions, making the file a dumping ground with no cohesion or clear ownership.
 
-```typescript
-// utils.ts — grab-bag of unrelated functions
-export function calculateOrderTotal(items: OrderItem[]): number {
-  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-}
+```java
+// OrderUtils.java — grab-bag of unrelated functions
+public class OrderUtils {
+    public static double calculateOrderTotal(List<OrderItem> items) {
+        return items.stream()
+            .mapToDouble(item -> item.getPrice() * item.getQuantity())
+            .sum();
+    }
 
-export function formatUserDisplayName(user: User): string {
-  return `${user.firstName} ${user.lastName}`;
-}
+    public static String formatUserDisplayName(User user) {
+        return user.getFirstName() + " " + user.getLastName();
+    }
 
-export function generateInvoiceNumber(): string {
-  return `INV-${Date.now()}`;
+    public static String generateInvoiceNumber() {
+        return "INV-" + System.currentTimeMillis();
+    }
 }
 ```
 
 Generic Naming Anti-Patterns:
-- `utils.js` with 50 unrelated functions
-- `helpers/misc.js` as a dumping ground
-- `common/shared.js` with unclear purpose
+- `Utils.java` with 50 unrelated methods
+- `Helpers.java` as a dumping ground
+- `Common.java` with unclear purpose
 
 ## Correct
 
 Each function lives in a module named after its bounded context, enforcing single responsibility and making purpose self-documenting.
 
-```typescript
-// order-calculator.ts — all order pricing logic
-export function calculateOrderTotal(items: OrderItem[]): number {
-  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+```java
+// OrderCalculator.java — all order pricing logic
+public class OrderCalculator {
+    public static double calculateOrderTotal(List<OrderItem> items) {
+        return items.stream()
+            .mapToDouble(item -> item.getPrice() * item.getQuantity())
+            .sum();
+    }
 }
 
-// user-display.ts — user presentation formatting
-export function formatUserDisplayName(user: User): string {
-  return `${user.firstName} ${user.lastName}`;
+// UserDisplayService.java — user presentation formatting
+public class UserDisplayService {
+    public String formatDisplayName(User user) {
+        return user.getFirstName() + " " + user.getLastName();
+    }
 }
 
-// invoice-generator.ts — invoice creation logic
-export function generateInvoiceNumber(): string {
-  return `INV-${Date.now()}`;
+// InvoiceGenerator.java — invoice creation logic
+public class InvoiceGenerator {
+    public String generateInvoiceNumber() {
+        return "INV-" + System.currentTimeMillis();
+    }
 }
 ```
 

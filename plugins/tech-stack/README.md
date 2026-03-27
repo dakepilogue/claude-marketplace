@@ -19,8 +19,8 @@ When Claude operates with explicit coding standards in CLAUDE.md, it produces mo
 # Install the plugin
 /plugin install tech-stack@NeoLabHQ/context-engineering-kit
 
-# Add TypeScript best practices to your project
-/tech-stack:add-typescript-best-practices
+# Add Spring Boot best practices to your project
+/tech-stack:add-springboot-best-practices
 
 # Review the updated CLAUDE.md
 cat CLAUDE.md
@@ -40,5 +40,5 @@ CLAUDE.md is read by Claude at the start of every conversation. By placing codin
 
 ## Commands
 
-- [/tech-stack:add-typescript-best-practices](./add-typescript-best-practices.md) - Sets up TypeScript best practices and code style rules in your CLAUDE.md file, providing Claude with explicit guidelines for generating consistent, type-safe code.
+- [/tech-stack:add-springboot-best-practices](./add-springboot-best-practices.md) - Sets up Spring Boot best practices and code style rules in your CLAUDE.md file, providing Claude with explicit guidelines for generating consistent, type-safe code.
 

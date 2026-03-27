@@ -159,7 +159,7 @@ For each critical bug found, provide a **full root cause analysis**:
 ```markdown
 ## 🚨 Critical Issue: [Brief Description]
 
-**Location:** `file.ts:123-145`
+**Location:** `file.java:123-145`
 
 **Symptom:** [What will go wrong from user/system perspective]
 
@@ -199,8 +199,8 @@ Use condensed format if 2+ instances of same pattern:
 ## ⚠️ High-Priority Pattern: [Issue Type]
 
 **Occurrences:**
-- `file1.ts:45` - [Specific case]
-- `file2.ts:89` - [Specific case]
+- `file1.java:45` - [Specific case]
+- `file2.java:89` - [Specific case]
 
 **Root Cause:** [Common underlying issue]
 

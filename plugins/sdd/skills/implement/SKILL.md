@@ -134,12 +134,12 @@ When `--refine` is used, it detects changes to **project files** (not the task f
 5. **Example:**
 
    ```bash
-   # User manually fixed src/validation/validation.service.ts
+   # User manually fixed src/validation/validation.service.java
    # (This file was created in Step 2)
    
    /implement my-task.feature.md --refine
    
-   # Detects: src/validation/validation.service.ts modified
+   # Detects: src/validation/validation.service.java modified
    # Maps to: Step 2 (Create ValidationService)
    # Action: Launch judge for Step 2
    #   - If PASS: User's fix is good, proceed to Step 3
@@ -164,27 +164,27 @@ When `--refine` is used, it detects changes to **project files** (not the task f
 
    ```bash
    # Scenario: User staged some changes, then made more edits
-   # Staged: src/validation/validation.service.ts (git add done)
-   # Unstaged: src/validation/validators/email.validator.ts (still editing)
+   # Staged: src/validation/validation.service.java (git add done)
+   # Unstaged: src/validation/validators/email.validator.java (still editing)
    
    /implement my-task.feature.md --refine
    
    # Detects: Both staged AND unstaged changes exist
    # Mode: Compares unstaged only (working dir vs staging)
-   # Only email.validator.ts is considered for refine
+   # Only email.validator.java is considered for refine
    # Staged changes are preserved, not re-verified
    
    # --
    
    # Scenario: User only has staged changes (ready to commit)
-   # Staged: src/validation/validation.service.ts
+   # Staged: src/validation/validation.service.java
    # Unstaged: none
    
    /implement my-task.feature.md --refine
    
    # Detects: Only staged changes
    # Mode: Compares against last commit
-   # validation.service.ts changes are verified
+   # validation.service.java changes are verified
    ```
 
 ### Human-in-the-Loop Behavior
@@ -1428,7 +1428,7 @@ Step 3: Launching sdd:developer agent...
 ### Example 5: Refine After User Fixes
 
 ```
-# User manually fixed src/validation/validation.service.ts
+# User manually fixed src/validation/validation.service.java
 # (This file was created in Step 2: Create ValidationService)
 
 User: /implement add-validation.feature.md --refine
@@ -1439,10 +1439,10 @@ Configuration:
 
 Detecting changed project files...
 Changed files:
-- src/validation/validation.service.ts (modified)
+- src/validation/validation.service.java (modified)
 
 Mapping files to implementation steps...
-- src/validation/validation.service.ts → Step 2 (Create ValidationService)
+- src/validation/validation.service.java → Step 2 (Create ValidationService)
 
 Earliest affected step: Step 2
 Preserving: Step 1 (unchanged)
@@ -1453,7 +1453,7 @@ Judge: 4.3/5.0 - PASS ✅
 Rest of logic is not affected, proceeding...
 
 Step 3: Launching judge to verify...
-Judge: typescript error detected in file
+Judge: java compilation error detected in file
 Launching imeplementation agent to fix the error, and align logic with user's changes...
 
 Launching judge to verify fixed logic...
@@ -1507,8 +1507,8 @@ Panel Result: 4.4/5.0 ✅
 **Status:** ✅ PASS
 
 **Artifacts Created:**
-- src/validation/validation.service.ts
-- src/validation/tests/validation.service.spec.ts
+- src/validation/validation.service.java
+- src/validation/tests/validation.service.spec.java
 
 **Judge Feedback:**
 - All criteria met
@@ -1678,7 +1678,7 @@ Task files define verification requirements in `#### Verification` sections with
    - `Per-Item Judges` - Multiple similar items - 1 judge per item, parallel execution
 
 2. **Artifact(s)**: Path(s) to file(s) being verified
-   - Example: `src/decision/decision.service.ts`, `src/decision/tests/decision.service.spec.ts`
+   - Example: `src/decision/decision.service.java`, `src/decision/tests/decision.service.spec.java`
 
 3. **Threshold**: Minimum passing score
    - Typically 4.0/5.0 for standard quality
@@ -1687,7 +1687,7 @@ Task files define verification requirements in `#### Verification` sections with
 4. **Rubric**: Weighted criteria table (see format below)
 
 5. **Reference Pattern** (Optional): Path to example of good implementation
-   - Example: `src/app.service.ts` for NestJS service patterns
+   - Example: `src/app.service.java` for NestJS service patterns
 
 ### Rubric Format
 
@@ -1761,7 +1761,7 @@ When judges evaluate artifacts, they use this 5-point scale for each criterion:
 #### Verification
 
 **Level:** Panel of 2 Judges with Aggregated Voting
-**Artifact:** `src/decision/decision.service.ts`, `src/decision/tests/decision.service.spec.ts`
+**Artifact:** `src/decision/decision.service.java`, `src/decision/tests/decision.service.spec.java`
 
 **Rubric:**
 

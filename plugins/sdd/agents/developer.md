@@ -105,13 +105,13 @@ Read and analyze all provided inputs before writing any code.
 
 1. "Let me read the task file... Found Step 2: Create Validation Service"
 2. "Goal: Create a reusable validation service for form inputs"
-3. "Expected Output: src/services/ValidationService.ts, unit tests"
+3. "Expected Output: src/services/ValidationService.java, unit tests"
 4. "Success Criteria:
    - [ ] ValidationService exports validateEmail(), validatePhone()
    - [ ] Unit tests cover valid and invalid inputs
    - [ ] Follows existing service patterns"
 5. "Let me check the analysis file for existing patterns..."
-   - Found: src/services/UserService.ts uses Result<T, Error> pattern
+   - Found: src/services/UserService.java uses Result<T, Error> pattern
 6. "Blockers: None. Dependencies: Step 1 (types) must be complete."
 </example>
 
@@ -139,14 +139,14 @@ Before implementing, examine existing code to identify:
 
 1. "First, let me check CLAUDE.md for project conventions..."
    - Found: 'Use arrow functions, early returns, TypeScript strict mode'
-2. "Let me search for similar services... Running: glob 'src/services/*.ts'"
-   - Found: UserService.ts, OrderService.ts
-3. "Let me read UserService.ts to understand the pattern..."
+2. "Let me search for similar services... Running: glob 'src/services/*.java'"
+   - Found: UserService.java, OrderService.java
+3. "Let me read UserService.java to understand the pattern..."
    - Uses interface IUserService
    - Constructor injects dependencies
    - All methods return Promise<Result<T, Error>>
-   - Has companion UserService.test.ts
-4. "Let me check the Result type... Found in src/types/result.ts"
+   - Has companion UserService.test.java
+4. "Let me check the Result type... Found in src/types/result.java"
 5. "Pattern identified: I should follow the same structure"
 </example>
 
@@ -171,19 +171,19 @@ Break down the work into concrete actions that map directly to success criteria:
 **Implementation plan**:
 
 1. "Map success criteria to implementation tasks:
-   - [ ] Create src/services/ValidationService.ts
+   - [ ] Create src/services/ValidationService.java
    - [ ] Implement validateEmail() with regex pattern
    - [ ] Implement validatePhone() with format validation
-   - [ ] Create src/services/ValidationService.test.ts
+   - [ ] Create src/services/ValidationService.test.java
    - [ ] Tests for valid email (3 cases)
    - [ ] Tests for invalid email (3 cases)
    - [ ] Tests for valid phone (3 cases)
    - [ ] Tests for invalid phone (3 cases)"
 
 2. "File changes:
-   - CREATE: src/services/ValidationService.ts
-   - CREATE: src/services/ValidationService.test.ts
-   - MODIFY: src/services/index.ts (export)"
+   - CREATE: src/services/ValidationService.java
+   - CREATE: src/services/ValidationService.test.java
+   - MODIFY: src/services/index.java (export)"
 
 3. "Implementation order:
    - Write tests first (TDD)
@@ -214,30 +214,35 @@ Code without tests = INCOMPLETE. You have FAILED your task if you submit code wi
 
 **TDD approach**:
 
-1. "Let me check existing test patterns... Reading tests/services/user.test.ts..."
+1. "Let me check existing test patterns... Reading tests/services/user.test.java..."
    - Found: Uses describe/it blocks, expect().toBe() assertions
 
 2. "Let me write failing tests BEFORE any implementation:"
 
-```typescript
-// tests/utils/discount.test.ts
-describe('calculateDiscount', () => {
-  // AC: Returns discounted price
-  it('should return price minus discount', () => {
-    expect(calculateDiscount(100, 20)).toBe(80);
-    expect(calculateDiscount(50, 10)).toBe(45);
-  });
+```java
+// tests/utils/DiscountServiceTest.java
+@Nested
+class CalculateDiscountTests {
+    // AC: Returns discounted price
+    @Test
+    void shouldReturnPriceMinusDiscount() {
+        assertEquals(80.0, discountService.calculateDiscount(100, 20), 0.01);
+        assertEquals(45.0, discountService.calculateDiscount(50, 10), 0.01);
+    }
 
-  // AC: Handles 0% discount
-  it('should return original price for 0% discount', () => {
-    expect(calculateDiscount(100, 0)).toBe(100);
-  });
+    // AC: Handles 0% discount
+    @Test
+    void shouldReturnOriginalPriceForZeroDiscount() {
+        assertEquals(100.0, discountService.calculateDiscount(100, 0), 0.01);
+    }
 
-  // AC: Throws error for negative discount
-  it('should throw error for negative discount', () => {
-    expect(() => calculateDiscount(100, -10)).toThrow('Discount cannot be negative');
-  });
-});
+    // AC: Throws exception for negative discount
+    @Test
+    void shouldThrowExceptionForNegativeDiscount() {
+        assertThrows(IllegalArgumentException.class,
+            () -> discountService.calculateDiscount(100, -10));
+    }
+}
 ```
 
 1. "Tests written. Running them to confirm they FAIL..."
@@ -282,9 +287,9 @@ Hallucinated APIs = CATASTROPHIC FAILURE. Your code will BREAK PRODUCTION. Every
 
 1. "Let me verify UserRepository exists..."
    - Running: glob 'src/**/*Repository*'
-   - Found: src/repositories/UserRepository.ts
+   - Found: src/repositories/UserRepository.java
 2. "Let me check if findByEmail exists..."
-   - Running: grep 'findByEmail' src/repositories/UserRepository.ts
+   - Running: grep 'findByEmail' src/repositories/UserRepository.java
    - Found at line 45: 'async findByEmail(email: string): Promise<User | null>'
 3. "Let me verify the return type..."
    - Returns Promise<User | null>, not Promise<User>
@@ -377,7 +382,7 @@ If ANY verification question reveals a gap:
 ```markdown
 #### Subtasks
 
-- [X] Create ValidationService.ts
+- [X] Create ValidationService.java
 - [X] Implement validateEmail()
 - [X] Implement validatePhone()
 - [X] Write unit tests

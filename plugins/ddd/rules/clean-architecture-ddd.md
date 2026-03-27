@@ -18,28 +18,31 @@ Keep business logic in pure domain and use case layers, free of framework or inf
 
 ## Incorrect
 
-Business logic is embedded directly in the HTTP handler, coupled to the web framework and database client. Testing requires spinning up the full server and database.
+Business logic is embedded directly in the REST controller, coupled to Spring MVC and database client. Testing requires spinning up the full application context and database.
 
-```typescript
-import express from "express";
-import { PrismaClient } from "@prisma/client";
+```java
+@RestController
+public class OrderController {
 
-const app = express();
-const prisma = new PrismaClient();
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
-app.post("/orders", async (req, res) => {
-  const { customerId, items } = req.body;
+    @PostMapping("/orders")
+    public Order createOrder(@RequestBody OrderRequest request) {
+        // Business rule mixed into the controller
+        double total = request.getItems().stream()
+            .mapToDouble(item -> item.getPrice() * item.getQty())
+            .sum();
+        double discount = total > 100 ? total * 0.1 : 0;
 
-  // Business rule mixed into the controller
-  const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const discount = total > 100 ? total * 0.1 : 0;
+        jdbcTemplate.update(
+            "INSERT INTO orders (customer_id, total) VALUES (?, ?)",
+            request.getCustomerId(), total - discount
+        );
 
-  const order = await prisma.order.create({
-    data: { customerId, total: total - discount, items: { create: items } },
-  });
-
-  res.json(order);
-});
+        return new Order(request.getCustomerId(), total - discount);
+    }
+}
 ```
 
 Poor Architectural Choices:
@@ -51,29 +54,46 @@ Poor Architectural Choices:
 
 Domain logic lives in a framework-free use case that depends on an abstract repository. The controller is a thin adapter that delegates to the use case.
 
-```typescript
-// domain/order.ts — pure business logic, no framework imports
-export function calculateOrderTotal(items: OrderItem[]): number {
-  const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
-  const discount = subtotal > 100 ? subtotal * 0.1 : 0;
-  return subtotal - discount;
+```java
+// domain/OrderDomain.java — pure business logic, no framework imports
+public class OrderDomain {
+    public static double calculateOrderTotal(List<OrderItem> items) {
+        double subtotal = items.stream()
+            .mapToDouble(item -> item.getPrice() * item.getQty())
+            .sum();
+        double discount = subtotal > 100 ? subtotal * 0.1 : 0;
+        return subtotal - discount;
+    }
 }
 
-// application/create-order.ts — use case depends on abstraction
-export class CreateOrder {
-  constructor(private readonly orders: OrderRepository) {}
+// application/CreateOrderUseCase.java — use case depends on abstraction
+public class CreateOrderUseCase {
+    private final OrderRepository orderRepository;
 
-  async execute(customerId: string, items: OrderItem[]): Promise<Order> {
-    const total = calculateOrderTotal(items);
-    return this.orders.save({ customerId, total, items });
-  }
+    public CreateOrderUseCase(OrderRepository orderRepository) {
+        this.orderRepository = orderRepository;
+    }
+
+    public Order execute(String customerId, List<OrderItem> items) {
+        double total = OrderDomain.calculateOrderTotal(items);
+        return orderRepository.save(new Order(customerId, total, items));
+    }
 }
 
-// infrastructure/controller.ts — thin adapter
-app.post("/orders", async (req, res) => {
-  const order = await createOrder.execute(req.body.customerId, req.body.items);
-  res.json(order);
-});
+// infrastructure/OrderController.java — thin adapter
+@RestController
+public class OrderController {
+    private final CreateOrderUseCase createOrderUseCase;
+
+    public OrderController(CreateOrderUseCase createOrderUseCase) {
+        this.createOrderUseCase = createOrderUseCase;
+    }
+
+    @PostMapping("/orders")
+    public Order createOrder(@RequestBody OrderRequest request) {
+        return createOrderUseCase.execute(request.getCustomerId(), request.getItems());
+    }
+}
 ```
 
 ## Reference

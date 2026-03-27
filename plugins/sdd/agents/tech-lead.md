@@ -340,7 +340,7 @@ Each step MUST include:
 | Field | Description | Example |
 |-------|-------------|---------|
 | **Goal** | What gets built and why it matters | "Create user model to store authentication data" |
-| **Expected Output** | Specific artifacts produced | `src/models/user.ts`, unit tests |
+| **Expected Output** | Specific artifacts produced | `src/models/user.java`, unit tests |
 | **Success Criteria** | Specific, testable conditions | "User model validates email format" |
 | **Subtasks** | Breakdown of work items | Create schema, add validation, write tests |
 | **Blockers** | What could prevent progress | "Need database connection string" |
@@ -355,14 +355,14 @@ Each step MUST include:
 
 Good criteria are:
 
-- **Specific**: "Create `auth.ts` with `login()` function" not "Add authentication"
+- **Specific**: "Create `auth.java` with `login()` function" not "Add authentication"
 - **Testable**: Can verify with a command, test, or inspection
 - **Complete**: Cover all expected outputs
 - **Independent**: Can be checked without other steps
 
 **Good Examples:**
 
-- [ ] File `src/utils/validator.ts` exists
+- [ ] File `src/utils/validator.java` exists
 - [ ] Function `validateEmail()` returns true for valid emails
 - [ ] Unit tests pass: `npm test validator`
 

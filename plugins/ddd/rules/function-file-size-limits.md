@@ -8,112 +8,119 @@ paths:
 
 # Function and File Size Limits
 
-- Decompose functions longer than 80 lines into smaller, focused functions of 50 lines or fewer. When a function grows beyond 80 lines, it is almost certainly doing more than one thing and should be split. 
-- Keep files under 200 lines of code. Large functions accumulate multiple responsibilities, making them harder to test, review, and reuse. 
-- Extract cohesive blocks of logic into named functions that each serve a single purpose. If extracted functions are only used within the same context, keep them in the same file. However, when a file exceeds 200 lines even after decomposition, split related functions into separate modules grouped by responsibility.
+- Decompose methods longer than 80 lines into smaller, focused methods of 50 lines or fewer. When a method grows beyond 80 lines, it is almost certainly doing more than one thing and should be split.
+- Keep files under 200 lines of code. Large functions accumulate multiple responsibilities, making them harder to test, review, and reuse.
+- Extract cohesive blocks of logic into named methods that each serve a single purpose. If extracted methods are only used within the same context, keep them in the same class. However, when a file exceeds 200 lines even after decomposition, split related methods into separate classes grouped by responsibility.
 
 ## Incorrect
 
-A single function handles validation, transformation, persistence, and notification. At over 80 lines it is difficult to test individual behaviors or reuse any part of the logic.
+A single method handles validation, transformation, persistence, and notification. At over 80 lines it is difficult to test individual behaviors or reuse any part of the logic.
 
-```typescript
-async function processUserRegistration(input: unknown) {
-  // Validate input (lines 1-20)
-  if (!input || typeof input !== 'object') throw new Error('Invalid input')
-  const { email, name, password, role } = input as Record<string, unknown>
-  if (!email || typeof email !== 'string') throw new Error('Email required')
-  if (!name || typeof name !== 'string') throw new Error('Name required')
-  if (!password || typeof password !== 'string') throw new Error('Password required')
-  if (password.length < 8) throw new Error('Password too short')
-  if (!/[A-Z]/.test(password)) throw new Error('Password needs uppercase')
-  if (!/[0-9]/.test(password)) throw new Error('Password needs digit')
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) throw new Error('Invalid email format')
+```java
+public User processUserRegistration(Object input) {
+    // Validate input (lines 1-20)
+    if (input == null) throw new ValidationException("Invalid input");
+    Map<String, Object> data = (Map<String, Object>) input;
+    String email = (String) data.get("email");
+    String name = (String) data.get("name");
+    String password = (String) data.get("password");
+    String role = (String) data.get("role");
+    if (email == null || email.isEmpty()) throw new ValidationException("Email required");
+    if (name == null || name.isEmpty()) throw new ValidationException("Name required");
+    if (password == null || password.isEmpty()) throw new ValidationException("Password required");
+    if (password.length() < 8) throw new ValidationException("Password too short");
+    if (!password.matches(".*[A-Z].*")) throw new ValidationException("Password needs uppercase");
+    if (!password.matches(".*[0-9].*")) throw new ValidationException("Password needs digit");
 
-  // Normalize data (lines 21-35)
-  const normalizedEmail = email.toLowerCase().trim()
-  const normalizedName = name.trim().replace(/\s+/g, ' ')
-  const hashedPassword = await bcrypt.hash(password, 12)
-  const assignedRole = role === 'admin' ? 'user' : (role as string) || 'user'
-  const createdAt = new Date()
-  const updatedAt = new Date()
+    // Normalize data (lines 21-35)
+    String normalizedEmail = email.toLowerCase().trim();
+    String normalizedName = name.trim().replaceAll("\\s+", " ");
+    String hashedPassword = passwordEncoder.encode(password);
+    String assignedRole = "admin".equals(role) ? "user" : role != null ? role : "user";
+    LocalDateTime createdAt = LocalDateTime.now();
+    LocalDateTime updatedAt = LocalDateTime.now();
 
-  // Check duplicates and persist (lines 36-55)
-  const existing = await db.users.findUnique({ where: { email: normalizedEmail } })
-  if (existing) throw new Error('Email already registered')
-  const user = await db.users.create({
-    data: {
-      email: normalizedEmail,
-      name: normalizedName,
-      password: hashedPassword,
-      role: assignedRole,
-      createdAt,
-      updatedAt,
-    },
-  })
+    // Check duplicates and persist (lines 36-55)
+    if (userRepository.existsByEmail(normalizedEmail))
+        throw new ValidationException("Email already registered");
+    User user = userRepository.save(User.builder()
+        .email(normalizedEmail)
+        .name(normalizedName)
+        .password(hashedPassword)
+        .role(assignedRole)
+        .createdAt(createdAt)
+        .updatedAt(updatedAt)
+        .build());
 
-  // Send notifications (lines 56-80+)
-  const welcomeHtml = `<h1>Welcome ${normalizedName}</h1><p>Your account is ready.</p>`
-  await emailService.send({
-    to: normalizedEmail,
-    subject: 'Welcome!',
-    html: welcomeHtml,
-  })
-  await analyticsService.track('user_registered', {
-    userId: user.id,
-    role: assignedRole,
-    timestamp: createdAt.toISOString(),
-  })
-  await auditLog.record('registration', { userId: user.id, email: normalizedEmail })
+    // Send notifications (lines 56-80+)
+    String welcomeHtml = "<h1>Welcome " + normalizedName + "</h1><p>Your account is ready.</p>";
+    emailService.send(EmailRequest.builder()
+        .to(normalizedEmail)
+        .subject("Welcome!")
+        .html(welcomeHtml)
+        .build());
+    analyticsService.track("user_registered", Map.of(
+        "userId", user.getId(),
+        "role", assignedRole,
+        "timestamp", createdAt.toString()
+    ));
+    auditLog.record("registration", Map.of("userId", user.getId(), "email", normalizedEmail));
 
-  return user
+    return user;
 }
 ```
 
 ## Correct
 
-Each responsibility is extracted into a focused function under 50 lines. Functions that are only used together stay in the same file.
+Each responsibility is extracted into a focused method under 50 lines. Methods that are only used together stay in the same class.
 
-```typescript
-function validateRegistrationInput(input: unknown): RegistrationInput {
-  if (!input || typeof input !== 'object') throw new Error('Invalid input')
-  const { email, name, password, role } = input as Record<string, unknown>
-  if (!email || typeof email !== 'string') throw new Error('Email required')
-  if (!name || typeof name !== 'string') throw new Error('Name required')
-  if (!password || typeof password !== 'string') throw new Error('Password required')
-  if (password.length < 8) throw new Error('Password too short')
-  if (!/[A-Z]/.test(password)) throw new Error('Password needs uppercase')
-  if (!/[0-9]/.test(password)) throw new Error('Password needs digit')
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Invalid email format')
-  return { email, name, password, role: typeof role === 'string' ? role : 'user' }
+```java
+public UserInput validateRegistrationInput(Object input) {
+    if (input == null) throw new ValidationException("Invalid input");
+    Map<String, Object> data = (Map<String, Object>) input;
+    String email = (String) data.get("email");
+    String name = (String) data.get("name");
+    String password = (String) data.get("password");
+    String role = (String) data.get("role");
+    if (email == null || email.isEmpty()) throw new ValidationException("Email required");
+    if (name == null || name.isEmpty()) throw new ValidationException("Name required");
+    if (password == null || password.isEmpty()) throw new ValidationException("Password required");
+    if (password.length() < 8) throw new ValidationException("Password too short");
+    if (!password.matches(".*[A-Z].*")) throw new ValidationException("Password needs uppercase");
+    if (!password.matches(".*[0-9].*")) throw new ValidationException("Password needs digit");
+    return new UserInput(email, name, password, role != null ? role : "user");
 }
 
-async function normalizeAndHash(input: RegistrationInput): Promise<NormalizedUser> {
-  return {
-    email: input.email.toLowerCase().trim(),
-    name: input.name.trim().replace(/\s+/g, ' '),
-    password: await bcrypt.hash(input.password, 12),
-    role: input.role === 'admin' ? 'user' : input.role,
-  }
+public NormalizedUser normalizeAndHash(UserInput input) {
+    return NormalizedUser.builder()
+        .email(input.email().toLowerCase().trim())
+        .name(input.name().trim().replaceAll("\\s+", " "))
+        .password(passwordEncoder.encode(input.password()))
+        .role("admin".equals(input.role()) ? "user" : input.role())
+        .build();
 }
 
-async function persistUser(data: NormalizedUser): Promise<User> {
-  const existing = await db.users.findUnique({ where: { email: data.email } })
-  if (existing) throw new Error('Email already registered')
-  return db.users.create({ data: { ...data, createdAt: new Date(), updatedAt: new Date() } })
+public User persistUser(NormalizedUser data) {
+    if (userRepository.existsByEmail(data.getEmail()))
+        throw new ValidationException("Email already registered");
+    return userRepository.save(data.toUser(LocalDateTime.now()));
 }
 
-async function notifyRegistration(user: User): Promise<void> {
-  await emailService.send({ to: user.email, subject: 'Welcome!', html: `<h1>Welcome ${user.name}</h1>` })
-  await analyticsService.track('user_registered', { userId: user.id, role: user.role })
-  await auditLog.record('registration', { userId: user.id, email: user.email })
+public void notifyRegistration(User user) {
+    emailService.send(EmailRequest.builder()
+        .to(user.getEmail())
+        .subject("Welcome!")
+        .html("<h1>Welcome " + user.getName() + "</h1>")
+        .build());
+    analyticsService.track("user_registered", Map.of("userId", user.getId(), "role", user.getRole()));
+    auditLog.record("registration", Map.of("userId", user.getId(), "email", user.getEmail()));
 }
 
-async function processUserRegistration(input: unknown): Promise<User> {
-  const validated = validateRegistrationInput(input)
-  const normalized = await normalizeAndHash(validated)
-  const user = await persistUser(normalized)
-  await notifyRegistration(user)
-  return user
+public User processUserRegistration(Object input) {
+    UserInput validated = validateRegistrationInput(input);
+    NormalizedUser normalized = normalizeAndHash(validated);
+    User user = persistUser(normalized);
+    notifyRegistration(user);
+    return user;
 }
 ```

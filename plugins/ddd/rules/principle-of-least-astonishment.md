@@ -1,36 +1,36 @@
 ---
-title: Principle of Least Astonishment — Functions Must Do Only What Their Name Promises
+title: Principle of Least Astonishment — Methods Must Do Only What Their Name Promises
 paths:
   - "src/**/*"
 impact: HIGH
 ---
 
-# Principle of Least Astonishment — Functions Must Do Only What Their Name Promises
+# Principle of Least Astonishment — Methods Must Do Only What Their Name Promises
 
-A function must do exactly what its name and signature suggest — nothing more, nothing less. Hidden side effects violate caller expectations, create invisible coupling, and make code unpredictable. When a function named `getUser` also emits analytics events, or a function named `validate` throws instead of returning a boolean, callers cannot reason about behavior from the interface alone. This forces every developer to read the implementation before using the function, defeating the purpose of abstraction.
+A method must do exactly what its name and signature suggest — nothing more, nothing less. Hidden side effects violate caller expectations, create invisible coupling, and make code unpredictable. When a method named `getUser` also emits analytics events, or a method named `validate` throws instead of returning a boolean, callers cannot reason about behavior from the interface alone. This forces every developer to read the implementation before using the method, defeating the purpose of abstraction.
 
-Keep functions honest: if a name implies a pure query, do not mutate state. If a name implies validation, return a result rather than throwing. Make all side effects explicit at the call site so the reader's mental model matches the actual execution. When additional work is needed (logging, analytics, notifications), perform it in the calling code or use clearly named wrapper functions that advertise the combined behavior.
+Keep methods honest: if a name implies a pure query, do not mutate state. If a name implies validation, return a result rather than throwing. Make all side effects explicit at the call site so the reader's mental model matches the actual execution. When additional work is needed (logging, analytics, notifications), perform it in the calling code or use clearly named wrapper methods that advertise the combined behavior.
 
 ## Incorrect
 
-The function name `getUser` promises a data retrieval operation, but it secretly logs an analytics event and updates a last-accessed timestamp — side effects the caller never asked for and cannot see from the signature.
+The method name `getUser` promises a data retrieval operation, but it secretly logs an analytics event and updates a last-accessed timestamp — side effects the caller never asked for and cannot see from the signature.
 
-```typescript
-// user-service.ts — hidden side effects inside a getter
-async function getUser(userId: string): Promise<User> {
-  const user = await userRepository.findById(userId);
-  if (!user) throw new NotFoundError("User not found");
+```java
+// UserService.java — hidden side effects inside a getter
+public User getUser(String userId) {
+    User user = userRepository.findById(userId)
+        .orElseThrow(() -> new NotFoundException("User not found"));
 
-  // Hidden side effect: analytics tracking
-  await analyticsService.track("user_viewed", {
-    userId: user.id,
-    timestamp: new Date().toISOString(),
-  });
+    // Hidden side effect: analytics tracking
+    analyticsService.track("user_viewed", Map.of(
+        "userId", user.getId(),
+        "timestamp", LocalDateTime.now().toString()
+    ));
 
-  // Hidden side effect: mutates database state
-  await userRepository.updateLastAccessed(userId, new Date());
+    // Hidden side effect: mutates database state
+    userRepository.updateLastAccessed(userId, LocalDateTime.now());
 
-  return user;
+    return user;
 }
 ```
 
@@ -38,18 +38,17 @@ async function getUser(userId: string): Promise<User> {
 
 The getter does only what its name says — retrieves a user. Side effects are performed explicitly at the call site, where the caller can see and control them.
 
-```typescript
-// user-service.ts — getter does only what the name promises
-async function getUser(userId: string): Promise<User> {
-  const user = await userRepository.findById(userId);
-  if (!user) throw new NotFoundError("User not found");
-  return user;
+```java
+// UserService.java — getter does only what the name promises
+public User getUser(String userId) {
+    return userRepository.findById(userId)
+        .orElseThrow(() -> new NotFoundException("User not found"));
 }
 
 // call site — side effects are explicit and visible
-const user = await getUser(userId);
-await analyticsService.track("user_viewed", { userId: user.id });
-await userRepository.updateLastAccessed(userId, new Date());
+User user = userService.getUser(userId);
+analyticsService.track("user_viewed", Map.of("userId", user.getId()));
+userService.updateLastAccessed(userId, LocalDateTime.now());
 ```
 
 ## Reference

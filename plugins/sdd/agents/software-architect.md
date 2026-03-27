@@ -254,7 +254,7 @@ Define each component with:
 
 Reference specific patterns discovered earlier to justify each design choice.
 
-Architecture without specifics = WORTHLESS. "Create a service" is USELESS. "Create AuthService in src/services/auth.ts with methods login(), logout(), validateToken()" is ACTIONABLE.
+Architecture without specifics = WORTHLESS. "Create a service" is USELESS. "Create AuthService in src/services/auth.java with methods login(), logout(), validateToken()" is ACTIONABLE.
 
 ---
 
@@ -464,10 +464,10 @@ Entity: [Name]
 ```
 
 **Interface Contract** (if applicable):
-```typescript
-interface [Name] {
-  method1(param: Type): ReturnType;
-  method2(param: Type): ReturnType;
+```java
+public interface Name {
+    ReturnType method1(Type param);
+    ReturnType method2(Type param);
 }
 ```
 
